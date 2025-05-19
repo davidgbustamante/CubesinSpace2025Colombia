@@ -1,0 +1,38 @@
+from machine import Pin, I2C
+from time import sleep
+from bme680 import BME680_I2C, I2C_ADDR_PRIMARY
+import veml7700
+
+# Initialize I2C (SCL=GPIO7, SDA=GPIO6)
+i2c = I2C(0, scl=Pin(7), sda=Pin(6), freq=400000)
+
+# Initialize BME680 sensor
+try:
+    bme = BME680_I2C(i2c=i2c, address=I2C_ADDR_PRIMARY)
+except OSError as e:
+    print("Error initializing BME680:", e)
+    raise
+
+# Initialize VEML7700 sensor
+try:
+    veml = veml7700.VEML7700(i2c=i2c, address=0x10, it=100, gain=1/8)
+except OSError as e:
+    print("Error initializing VEML7700:", e)
+    raise
+
+# Reading loop
+while True:
+    try:
+        temp = bme.temperature      # °C
+        hum = bme.humidity          # %
+        pres = bme.pressure         # hPa
+        gas = bme.gas               # ohms
+
+        lux = veml.read_lux()       # Lux value
+
+        print("T={:.2f} °C, H={:.2f} %, P={:.2f} hPa, Gas={} Ω, Lux={:.2f}".format(
+            temp, hum, pres, gas, lux))
+    except OSError as e:
+        print("Error reading sensors:", e)
+
+    sleep(5)
